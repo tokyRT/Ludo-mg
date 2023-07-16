@@ -177,6 +177,20 @@ main .board {
             &:hover{
                 // transform: scale(1.2);
             }
+            &.highlight{
+                &::before{
+                    content: '';
+                    display: block;
+                    width: 80px;
+                    height: 80px;
+                    border: 5px dashed rgb(0, 0, 0);
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    border-radius: 100px;
+                    animation: highlightDice .5s ease-out infinite alternate-reverse;                
+                }
+            }
             .dice{
                 width: 80%;
                 height: 80%;
@@ -227,5 +241,11 @@ main .board {
 @keyframes highlightPawn {
     to{
         transform: scale(1.2);
+    }
+}
+@keyframes highlightDice  {
+    to{
+        transform: scale(1.2);
+        box-shadow: 0px 0px 30px 6px rgb(255, 213, 0);
     }
 }

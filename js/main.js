@@ -104,13 +104,14 @@ function rollDice() {
     diceValue = getRandomInt(1, 7);
     $(dice).addClass('face-' + diceValue);
 
-
+    removeHighlightDice();
     setTimeout(function () {
         $('.dice-value span').text(diceValue);
 
         //check if all pawns are in private area
         if(privateAreas[turnOrder[currentTurn]].length == 4 && diceValue != 6){
             nextTurn();
+            highlightDice();
             return;
         }
 
@@ -210,6 +211,7 @@ function highlightPawn(pawn) {
         // logBoard();
         nextTurn();
         attachEventToDice();
+        highlightDice();
 
     });
 }
@@ -258,12 +260,20 @@ function removeAllHightlight(color){
         });
     });
 }
+function highlightDice() {
+    $('.dashboard .dice-section').addClass('highlight');
+}
+function removeHighlightDice() {
+    $('.dashboard .dice-section').removeClass('highlight');
+}
 function attachEventToDice() {
+    highlightDice();
     $('.dashboard .dice-section').on('click', function () {
         rollDice()
     });
 }
 function removeEventFromDice() {
+    removeHighlightDice();
     $('.dashboard .dice-section').unbind();
 }
 //initialize the board
