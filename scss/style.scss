@@ -1,12 +1,12 @@
 :root {
     --board-width: 650px;
-    --cell-width: calc(var(--board-width) / 15.05);
+    --cell-width: calc(var(--board-width) / 15);
     --board-bg: white;
     --red: red;
-    --green: green;
-    --yellow: rgb(248, 225, 17);
-    --blue: blue;
-    --cell-border-color: grey;
+    --green: #07c107;
+    --yellow: rgb(255 209 0);
+    --blue: #2311db;
+    --cell-border-color: rgb(216, 216, 216);
 }
 
 *{
@@ -16,15 +16,26 @@
 }
 body{
     background-color: rgb(206, 206, 206);
+    background: url('../assets/img/bg.jpg') no-repeat  center center fixed;
+    background-size: cover;
     // min-height: 100vh;
     font-family: 'Bangers', cursive;
+    color: white;
+}
+main>h1{
+    text-align: center;
+    margin-top: 30px;
+    margin-bottom: 30px;
+    letter-spacing: 10px;
+    font-size: 3em;
 }
 main .board {
     width: var(--board-width);
     height: var(--board-width);
-    border: 1px solid red;
     margin: auto;
     background: var(--board-bg);
+    border-radius: 10px;
+    outline: 4px solid white;
     .red {
         background-color: var(--red);
     }
@@ -179,7 +190,7 @@ main .board {
         height: 70px;
         margin-top: 40px;
         border-radius: 10px;
-        border: 4px solid rgb(255, 217, 0);
+        border: 4px solid white;
         display: flex;
         justify-content: space-around;
         align-items: center;
@@ -220,7 +231,7 @@ main .board {
             top: -20px;
             left: 50%;
             transform: translateX(-50%);
-            border: 4px solid rgb(255, 217, 0);
+            border: 4px solid white;
             display: flex;
             align-items: center;
             justify-content: center;
