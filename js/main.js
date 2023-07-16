@@ -3,7 +3,7 @@ const pawnNumber = 4;
 const playersNumber = 4;
 let diceValue = 6;
 let turnOrder = ['blue', 'red', 'green', 'yellow'];
-let currentTurn = 3; //blue
+let currentTurn = 0; //blue
 const sfxPawnMove = new Audio('../assets/sounds/sfx_token_move.mp3');
 const sfxDiceRoll = new Audio('../assets/sounds/sfx_dice_roll.mp3');
 
@@ -101,7 +101,7 @@ function rollDice() {
         $(this).removeClass('rolling')
     });
     $(dice).removeClass('face-' + diceValue);
-    diceValue = getRandomInt(6, 7);
+    diceValue = getRandomInt(1, 7);
     $(dice).addClass('face-' + diceValue);
 
 
