@@ -108,6 +108,13 @@ function rollDice() {
     setTimeout(function () {
         $('.dice-value span').text(diceValue);
 
+        //check if all pawns are in private area
+        if(privateAreas[turnOrder[currentTurn]].length == 4 && diceValue != 6){
+            nextTurn();
+            return;
+        }
+
+
         //highlight all pawns for the current player
         highlightAllPawn(turnOrder[currentTurn]);
         // nextTurn();
