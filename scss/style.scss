@@ -96,14 +96,66 @@ main .board {
                 width: calc(var(--cell-width) * 3);
                 height: calc(var(--cell-width) * 3);
                 flex-shrink: 0;
+                position: relative;
+                overflow: hidden;
+                .home{
+                    position: absolute;
+                    width: 40px;
+                    height: 70px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    .cells{
+                        flex-direction: column;
+                        .cell{
+                            width: 15px;
+                            height: 15px;
+                            border: none;
+                            .pawn{
+                                transform: scale(1.3);
+                                img{
+                                    width: 100%;
+                                }
+                            }
+                        }
+                    }
+                    &.red{
+                        top: 50%;
+                        transform: translateY(-50%);
+                    }
+                    &.green{
+                        height: 40px;
+                        width: 70px;
+                        top: 0;
+                        left: 50%;
+                        transform: translateX(-50%);
+                    }
+                    &.blue{
+                        height: 40px;
+                        width: 70px;
+                        bottom: 0;
+                        left: 50%;
+                        transform: translateX(-50%);
+                    }
+                    &.yellow{
+                        right: 0;
+                        bottom: 50%;
+                        transform: translateY(50%);
+                    }
+                    &.green, &.blue{
+                        .cells{
+                            flex-direction: row;
+                        }
+                    }
+                }
             }
         }
         &.section-3 {
         }
     }
     .pawn{
-        width: var(--cell-width);
-        height: var(--cell-width);
+        width: 100%;
+        height: 100%;
         display: flex;
         align-items: center;
         justify-content: center;

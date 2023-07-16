@@ -1,11 +1,16 @@
 const safePos = [1, 9, 14, 22, 27, 35, 40, 48];
 const pawnNumber = 4;
 const playersNumber = 4;
+// const playersNumber = 2;
 let diceValue = 6;
 let turnOrder = ['blue', 'red', 'green', 'yellow'];
+// let turnOrder = ['yellow', 'blue'];
 let currentTurn = 0; //blue
 const sfxPawnMove = new Audio('../assets/sounds/sfx_token_move.mp3');
 const sfxDiceRoll = new Audio('../assets/sounds/sfx_dice_roll.mp3');
+const sfxInHome = new Audio('../assets/sounds/sfx_in_home.mp3');
+sfxInHome.volume = 0.1;
+const sfxWin = new Audio('../assets/sounds/sfx_win.mp3');
 
 
 function Position(length) {
@@ -91,6 +96,33 @@ function getRandomInt(min, max) {
     //The maximum is exclusive and the minimum is inclusive
     return Math.floor(Math.random() * (max - min)) + min;
 }
+//check if all pawns in last line can be moved
+function pawnsInLastLineCanMove(color) {
+    let canMove = false;
+    Object.keys(lastLine[color]).forEach(pos => {
+        lastLine[color][pos].forEach(pawn => {
+            if (parseInt(pawn.currentCell) + diceValue <= 6) {
+                canMove = true;
+            }
+        });
+    });
+    return canMove;
+}
+function pawnsInPrivateCanMove(color) {
+    return privateAreas[color].length > 0 && diceValue == 6;
+}
+
+function pawnsNumberInOuter(color) {
+    let number = 0;
+    Object.keys(outerPosition).forEach(pos => {
+        outerPosition[pos].forEach(pawn => {
+            if (pawn.color == color) {
+                number++;
+            }
+        });
+    });
+    return number;
+}
 
 function rollDice() {
     let dice = $('.dashboard .dice-section .dice');
@@ -108,8 +140,17 @@ function rollDice() {
     setTimeout(function () {
         $('.dice-value span').text(diceValue);
 
-        //check if all pawns are in private area
-        if(privateAreas[turnOrder[currentTurn]].length == 4 && diceValue != 6){
+        if (
+            //check if all pawns are in private area
+            (!pawnsInPrivateCanMove(turnOrder[currentTurn]) &&
+                !pawnsInLastLineCanMove(turnOrder[currentTurn]) &&
+                pawnsNumberInOuter(turnOrder[currentTurn]) == 0
+            ) ||
+            //check if all pawns are in home area
+            homeAreas[turnOrder[currentTurn]].length == 4
+
+        ) {
+
             nextTurn();
             highlightDice();
             return;
@@ -120,7 +161,7 @@ function rollDice() {
         highlightAllPawn(turnOrder[currentTurn]);
         // nextTurn();
     }, 1000);
-    console.log(diceValue);
+    // console.log(diceValue);
 }
 
 function updateDashboard() {
@@ -137,75 +178,113 @@ function nextTurn() {
         }
     }
     updateDashboard();
-    console.log('currentTurn', currentTurn);
+    // console.log('currentTurn', currentTurn);
 }
 function getNextCell(pawn) {
     let next = {
         cell: 0,
         area: 'outer'
     }
-    if(pawn.area == 'private'){
+    let currentCell = parseInt(pawn.currentCell);
+    let startCell = parseInt(pawn.startCell);
+    let endCell = parseInt(pawn.endCell);
+    let nextCell = currentCell + diceValue;
+    if (pawn.area == 'private') {
         next.area = 'outer';
         next.cell = pawn.startCell;
-    } else if(pawn.area == 'outer'){
-        let currentCell = parseInt(pawn.currentCell);
-        let startCell = parseInt(pawn.startCell);
-        let endCell = parseInt(pawn.endCell);
-        let nextCell = currentCell + diceValue;
-        if((currentCell >= endCell-6 && currentCell<=endCell) && nextCell > endCell){
+    } else if (pawn.area == 'outer') {
+        if ((currentCell >= endCell - 6 && currentCell <= endCell) && nextCell > endCell) {
             //the pawn will be in the last line
             next.area = 'last-line'
             let remaining = nextCell - endCell;
             next.cell = remaining;
-        } else{
-            if(nextCell > 52){
+            if (remaining == 6) {
+                next.cell = 0;
+                next.area = 'home';
+            }
+        } else {
+            if (nextCell > 52) {
                 let remaining = nextCell - 52;
                 next.cell = remaining;
                 //
-            } else{
+            } else {
                 next.cell = nextCell;
             }
         }
 
-        
+    } else if (pawn.area == 'last-line') {
+        if (nextCell == 6) {
+
+            next.cell = 0;
+            next.area = 'home';
+        } else {
+            next.cell = nextCell;
+            next.area = 'last-line'
+        }
     }
     return next;
 }
 function highlightPawn(pawn) {
     getPawnElem(pawn).addClass('highlight');
     removeEventFromDice();
-    $('.pawn.'+pawn.name).on('click', function(){
-        // console.log('pawn clicked');
-        //move the pawn
-        console.log(pawn.currentCell);
+    $('.pawn.' + pawn.name).on('click', function () {
+
         //if the pawn is in the private area
-        if(pawn.area == 'private'){
+        if (pawn.area == 'private') {
             //move the pawn to the starting cell
             pawn.currentCell = pawn.startCell;
             pawn.area = 'outer';
-            putPawn(pawn, 'out-'+pawn.currentCell);
+            putPawn(pawn, 'out-' + pawn.currentCell);
+
             //remove the pawn from the private area
             privateAreas[pawn.color].splice(privateAreas[pawn.color].indexOf(pawn), 1);
             //add the pawn to outerposition
             outerPosition[pawn.currentCell].push(pawn);
-        } else if(pawn.area == 'outer'){
+
+        } else if (pawn.area == 'outer') {
             //move the pawn to the next cell
             let next = getNextCell(pawn);
             //remove the pawn from the current cell
             outerPosition[pawn.currentCell].splice(outerPosition[pawn.currentCell].indexOf(pawn), 1);
             pawn.currentCell = next.cell;
             pawn.area = next.area;
-            if(next.area == 'outer'){
+            if (next.area == 'outer') {
                 //add the pawn to the next cell in the outer position
                 outerPosition[next.cell].push(pawn);
-                putPawn(pawn, 'out-'+pawn.currentCell);
-            } else if(next.area == 'last-line'){
+                putPawn(pawn, 'out-' + pawn.currentCell);
+            } else if (next.area == 'last-line') {
                 //add the pawn in the last line
-                console.log('last line next cell', next);
                 lastLine[pawn.color][next.cell].push(pawn);
-                putPawn(pawn, pawn.color+"-last-line-"+next.cell);
+                putPawn(pawn, pawn.color + "-last-line-" + next.cell);
+            } else {
+                pawn.currentCell = next.cell;
+                pawn.area = next.area;
+                //add pawn to home area
+                homeAreas[pawn.color].push(pawn);
+                sfxInHome.play();
+                putPawn(pawn, pawn.color + "-home-" + homeAreas[pawn.color].length);
+            }
+        } else if (pawn.area == 'last-line') {
+            let next = getNextCell(pawn);
+            if (next.area == 'last-line') {
+                //remove the pawn from the current cell
+                lastLine[pawn.color][pawn.currentCell].splice(lastLine[pawn.color][pawn.currentCell].indexOf(pawn), 1);
+                pawn.currentCell = next.cell;
+                lastLine[pawn.color][next.cell].push(pawn);
+                putPawn(pawn, pawn.color + "-last-line-" + next.cell);
+            } else {
+                //remove the pawn from the current cell
+                lastLine[pawn.color][pawn.currentCell].splice(lastLine[pawn.color][pawn.currentCell].indexOf(pawn), 1);
+                pawn.currentCell = next.cell;
+                pawn.area = next.area;
+                //add pawn to home area
+                homeAreas[pawn.color].push(pawn);
+                sfxInHome.play();
+                putPawn(pawn, pawn.color + "-home-" + homeAreas[pawn.color].length);
             }
         }
+
+
         //remove the highlight
         removeAllHightlight(pawn.color);
         // logBoard();
@@ -217,47 +296,50 @@ function highlightPawn(pawn) {
 }
 function removeHighlightPawn(pawn) {
     getPawnElem(pawn).removeClass('highlight');
-    $('.pawn.'+pawn.name).unbind();
+    $('.pawn.' + pawn.name).unbind();
 }
 function highlightAllPawn(color) {
     privateAreas[color].forEach(pawn => {
-        if(diceValue == 6){
+        if (diceValue == 6) {
             highlightPawn(pawn);
         }
     });
     Object.keys(outerPosition).forEach(pos => {
         outerPosition[pos].forEach(pawn => {
-            if(pawn.color == color){
+            if (pawn.color == color) {
                 highlightPawn(pawn);
             }
         });
     });
     Object.keys(lastLine[color]).forEach(pos => {
         lastLine[color][pos].forEach(pawn => {
-            if(pawn.color == color){
+            if (parseInt(pawn.currentCell) + diceValue <= 6) {
                 highlightPawn(pawn);
             }
         });
     });
 }
 
-function removeAllHightlight(color){
+function removeAllHightlight(color) {
     privateAreas[color].forEach(pawn => {
         removeHighlightPawn(pawn);
     });
     Object.keys(outerPosition).forEach(pos => {
         outerPosition[pos].forEach(pawn => {
-            if(pawn.color == color){
+            if (pawn.color == color) {
                 removeHighlightPawn(pawn);
             }
         });
     });
     Object.keys(lastLine[color]).forEach(pos => {
         lastLine[color][pos].forEach(pawn => {
-            if(pawn.color == color){
+            if (pawn.color == color) {
                 removeHighlightPawn(pawn);
             }
         });
+    });
+    homeAreas[color].forEach(pawn => {
+        removeHighlightPawn(pawn);
     });
 }
 function highlightDice() {
@@ -288,6 +370,43 @@ function initGame() {
             putPawn(pawn, pawn.currentCell);
         }
     });
+
+    /*
+
+    //put the first blue pawn to the last line
+    privateAreas.blue[0].currentCell = 3;
+    privateAreas.blue[0].area = 'last-line';
+    lastLine.blue[3].push(privateAreas.blue[0]);
+    putPawn(privateAreas.blue[0], 'blue-last-line-3');
+    //remove it from the private area
+    privateAreas.blue.splice(0, 1);
+
+    //put the first red pawn to the last line
+    privateAreas.red[0].currentCell = 1;
+    privateAreas.red[0].area = 'last-line';
+    lastLine.red[1].push(privateAreas.red[0]);
+    putPawn(privateAreas.red[0], 'red-last-line-1');
+    //remove it from the private area
+    privateAreas.red.splice(0, 1);
+
+    //put the first green pawn to the last line
+    privateAreas.green[0].currentCell = 5;
+    privateAreas.green[0].area = 'last-line';
+    lastLine.green[5].push(privateAreas.green[0]);
+    putPawn(privateAreas.green[0], 'green-last-line-5');
+    //remove it from the private area
+    privateAreas.green.splice(0, 1);
+    //put the first yellow pawn to the endcell 
+    privateAreas.yellow[0].currentCell = privateAreas.yellow[0].endCell;
+    privateAreas.yellow[0].area = 'outer';
+    outerPosition[privateAreas.yellow[0].endCell].push(privateAreas.yellow[0]);
+    putPawn(privateAreas.yellow[0], 'out-' + privateAreas.yellow[0].endCell);
+    //remove it from the privte area
+    privateAreas.yellow.splice(0, 1);
+    */
+
+    // logBoard();
+
 
     //attach event to the dice
     attachEventToDice();
